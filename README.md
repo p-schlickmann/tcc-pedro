@@ -81,7 +81,7 @@ A configuração do ambiente de produção possui algumas diferenças em relaç�
   No ambiente de produção, o Docker Compose deve ser executado com o profile `prod`. O comando para iniciar os containers em produção é:
 
 
-  ```bash
+```bash
   docker-compose --profile prod up --build
 ```
 ### 3. Configuração de NFS para Arquivos Estáticos
