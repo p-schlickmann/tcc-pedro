@@ -1,0 +1,55 @@
+version: "3.8"
+
+x-app-base:
+    &app-base
+    container_name: "TCC-app"
+    depends_on:
+        - db
+    restart: on-failure
+    env_file: ./.env
+    environment:
+        - MAVEN_OPTS=-DMYSQLDB_DATABASE=${MYSQLDB_DATABASE} -DMYSQLDB_USER=${MYSQLDB_USER} -DMYSQLDB_ROOT_PASSWORD=${MYSQLDB_ROOT_PASSWORD}
+    ports:
+        - '8080:8080'
+        - '8443:8443'
+    volumes:
+        - .m2:/root/.m2
+        - ./tcc-files:/home/tcc/files
+        - .:/tcc-app
+        - ./server.xml:/usr/local/tomcat/conf/server.xml
+    stdin_open: true
+    tty: true
+
+
+services:
+    db:
+        container_name: "TCC-db"
+        platform: linux/x86_64
+        image: mysql:5.7.34
+        command: --character-set-server=utf8mb4 --max_allowed_packet=128M --innodb_log_file_size=256M
+        env_file: ./.env
+        environment:
+            MYSQL_ROOT_PASSWORD: $MYSQLDB_ROOT_PASSWORD
+            MYSQL_DATABASE: $MYSQLDB_DATABASE
+        volumes:
+            - my-db:/var/lib/mysql
+        ports:
+            - '3306:3306'
+        profiles: [ "dev", "prod" ]
+
+    app-dev:
+        <<: *app-base
+        build:
+            context: .
+            args:
+                - SELF_SSL=${SELF_SSL:-no}
+        profiles: [ "dev" ]
+
+    app-prod:
+        <<: *app-base
+        image: "registry.codigos.ufsc.br/antonio.c.mariani/tcc-ufsc:master"
+        profiles: [ "prod" ]
+
+
+volumes:
+    my-db:
